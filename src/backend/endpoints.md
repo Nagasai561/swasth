@@ -45,7 +45,7 @@ Field types:
   - `diet`: `"Vegetarian"` | `"Vegan"` | `"Mixed"`
   - `sleep`: `"<5 hours"` | `"5-6 hours"` | `"7-8 hours"` | `"8+ hours"`
 
-### `AnalysisResult` (JSON response body)
+### `AnalysisResult` (JSON object)
 
 Returned by `/upload_file` on success:
 
@@ -63,6 +63,84 @@ Field types:
 - `possible_causes`: `list[str]`
 - `suggested_diet`: `list[str]`
 - `suggested_lifestyle_changes`: `list[str]`
+
+### `Measurement` (JSON object)
+
+```json
+{
+  "category": "Complete Blood Count",
+  "name": "Hemoglobin",
+  "observed_value": 11,
+  "nominal_range": {
+    "lower_value": 12,
+    "upper_value": 16
+  },
+  "unit": "g/dL",
+  "concern": "Medium"
+}
+```
+
+Field types:
+- `category`: `str`
+- `name`: `str`
+- `observed_value`: `int`
+- `nominal_range`: object
+  - `lower_value`: `int`
+  - `upper_value`: `int`
+- `unit`: `str`
+- `concern`: `"Low"` | `"Medium"` | `"High"`
+
+### `Measurements` (JSON object)
+
+```json
+{
+  "collection": [
+    {
+      "category": "Complete Blood Count",
+      "name": "Hemoglobin",
+      "observed_value": 11,
+      "nominal_range": {
+        "lower_value": 12,
+        "upper_value": 16
+      },
+      "unit": "g/dL",
+      "concern": "Medium"
+    }
+  ]
+}
+```
+
+### `UploadFileResponse` (JSON response body)
+
+```json
+{
+  "analysis_result": {
+    "anomalies": ["Hemoglobin slightly low"],
+    "possible_causes": ["Iron deficiency"],
+    "suggested_diet": ["Increase iron-rich foods"],
+    "suggested_lifestyle_changes": ["Improve sleep consistency"]
+  },
+  "measuremnts": {
+    "collection": [
+      {
+        "category": "Complete Blood Count",
+        "name": "Hemoglobin",
+        "observed_value": 11,
+        "nominal_range": {
+          "lower_value": 12,
+          "upper_value": 16
+        },
+        "unit": "g/dL",
+        "concern": "Medium"
+      }
+    ]
+  }
+}
+```
+
+Field types:
+- `analysis_result`: `AnalysisResult`
+- `measuremnts`: `Measurements` (note: key is currently spelled `measuremnts` in backend response model)
 
 ## Endpoints
 
@@ -99,8 +177,7 @@ Supported file MIME types:
 - `application/pdf`
 
 **Success response (`200`)**
-- Body: `AnalysisResult` (see schema above)
-- The route currently returns whatever `analyze_blood_test_results(...)` returns; if analysis parsing fails, response can be `null`.
+- Body: `UploadFileResponse` (see schema above)
 
 **Error responses**
 - `400`:
@@ -108,6 +185,8 @@ Supported file MIME types:
   - `"Failed to extract data from the uploaded file"` (extractor returned no data)
 - `404`:
   - `"User not found"` (missing or unknown `user_id`)
+- `500`:
+  - `"Failed to analyze the extracted data"` (analysis step returned no result)
 
 ## Frontend Integration Notes
 

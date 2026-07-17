@@ -1,12 +1,12 @@
 ## Setting up the environment for the Swasth Backend
 
 1. Install `uv` (if not already)
-2. `cd` into the `src/backend` directory and run the following commands:
+2. From the repository root, run:
 ```bash
 uv sync
 cp src/backend/.env.example src/backend/.env
 ```
-3. Fill up the `.env` file
+3. Fill up `src/backend/.env` (`OPENAI_API_KEY=...`)
 
 
 ## Code to run the backend server
@@ -55,3 +55,31 @@ curl -X POST "http://localhost:8000/upload_file?user_id=0" \
 ```
 
 Supported upload types: `.pdf`, `.jpeg`, `.jpg`, `.png`.
+
+Response shape for `/upload_file`:
+
+```json
+{
+  "analysis_result": {
+    "anomalies": ["..."],
+    "possible_causes": ["..."],
+    "suggested_diet": ["..."],
+    "suggested_lifestyle_changes": ["..."]
+  },
+  "measurements": {
+    "collection": [
+      {
+        "category": "Complete Blood Count",
+        "name": "Hemoglobin",
+        "observed_value": 11,
+        "nominal_range": {
+          "lower_value": 12,
+          "upper_value": 16
+        },
+        "unit": "g/dL",
+        "concern": "Medium"
+      }
+    ]
+  }
+}
+```

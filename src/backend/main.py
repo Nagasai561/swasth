@@ -1,7 +1,8 @@
 from fastapi import FastAPI, File, UploadFile, HTTPException
 from user_medical_info import UserMedicalInfo
-from extract import get_data_from_filebytes
-from analysis import analyze_blood_test_results
+from extract import get_data_from_filebytes, Measurements
+from analysis import analyze_blood_test_results, AnalysisResult
+from pydantic import BaseModel
 
 app = FastAPI()
 user_id_to_user: dict[int, UserMedicalInfo] = {}
@@ -22,6 +23,10 @@ MIME_TYPE_TO_EXTENSION = {
     "application/pdf": ".pdf"
 }
 
+class UploadFileResponse(BaseModel):
+    analysis_result: AnalysisResult
+    measurements: Measurements
+
 # TODO: Handle user_id in a better way, maybe through authentication or session management
 @app.post("/upload_file")
 def upload_file(user_id: int, file: UploadFile = File(...)):
@@ -38,7 +43,10 @@ def upload_file(user_id: int, file: UploadFile = File(...)):
         raise HTTPException(status_code=404, detail="User not found")
 
     analysis = analyze_blood_test_results(extracted_data, user_info)
-    return analysis
+    if analysis is None:
+        raise HTTPException(status_code=500, detail="Failed to analyze the extracted data")
+
+    return UploadFileResponse(analysis_result=analysis, measurements=extracted_data)
 
 
 if __name__ == "__main__":
