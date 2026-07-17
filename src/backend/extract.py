@@ -1,10 +1,10 @@
 import base64
 import sys
 from pathlib import Path
-from dotenv import load_dotenv
-from openai import OpenAI
-from pydantic import BaseModel
+
 import pymupdf
+from pydantic import BaseModel
+from llm import llm_client
 
 
 class NominalRange(BaseModel):
@@ -31,16 +31,15 @@ You are given a medical report of a user's blood test.
 Extract only the meaningful information necessary for downstream tasks as required.
 """.replace("\n", "")
 
-load_dotenv()
-client = OpenAI()
 
 def encode_bytes_base64(imgbytes: bytes):
     encoded_bytes = base64.b64encode(imgbytes)
     return encoded_bytes.decode("utf-8")
 
+
 def get_data_from_imgbytes(imgbytes: bytes, img_ext: str) -> Measurements | None:
     img_base64 = encode_bytes_base64(imgbytes)
-    response = client.responses.parse(
+    response = llm_client.responses.parse(
         model=MODEL,
         input=[
             {"role": "system", "content": EXTRACTION_PROMPT},
@@ -60,12 +59,13 @@ def get_data_from_imgbytes(imgbytes: bytes, img_ext: str) -> Measurements | None
 
     return response.output_parsed
 
+
 if __name__ == "__main__":
     from rich import print as rprint
 
     filepath = Path(sys.argv[1])
-    img_ext = 'png'
-    if filepath.suffix == '.pdf':
+    img_ext = "png"
+    if filepath.suffix == ".pdf":
         doc = pymupdf.open(filepath)
         imgbytes_container: list[bytes] = []
         for page in doc:
@@ -74,7 +74,7 @@ if __name__ == "__main__":
             imgbytes_container.append(bytes)
 
     # filepath.suffix.lower() gives us extension, prepended with '.'
-    elif (img_ext := filepath.suffix.lower()[1:]) in ['jpeg', 'png', 'jpg']:
+    elif (img_ext := filepath.suffix.lower()[1:]) in ["jpeg", "png", "jpg"]:
         imgbytes_container = [filepath.read_bytes()]
 
     else:
