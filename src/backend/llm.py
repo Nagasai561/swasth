@@ -4,7 +4,6 @@ from typing import Any
 
 from dotenv import load_dotenv
 from openai import OpenAI
-from external_data import search_blood_test_corpus
 
 dotenv_filepath = (Path(__file__).parent / ".env").resolve()
 if not dotenv_filepath.exists():
@@ -31,6 +30,7 @@ SEARCH_CORPUS_TOOL = {
 
 
 def _run_tool_calls(response: Any) -> list[dict[str, Any]]:
+    from external_data import search_blood_test_corpus
 
     tool_outputs: list[dict[str, Any]] = []
     for item in response.output:
