@@ -1,9 +1,10 @@
 from pathlib import Path
 import json
 from typing import Any
+import asyncio
 
 from dotenv import load_dotenv
-from openai import OpenAI
+from openai import AsyncOpenAI
 from function_log import log
 
 dotenv_filepath = (Path(__file__).parent / ".env").resolve()
@@ -11,7 +12,7 @@ if not dotenv_filepath.exists():
     raise FileNotFoundError(f"Could not find .env file at {dotenv_filepath}")
 
 load_dotenv(dotenv_filepath)
-llm_client = OpenAI()
+llm_client = AsyncOpenAI()
 
 SEARCH_CORPUS_TOOL_NAME = "search_blood_test_corpus"
 SEARCH_CORPUS_TOOL = {
@@ -60,19 +61,19 @@ def _requires_tool_calls(response: Any) -> bool:
     return any(item.type == "function_call" for item in response.output)
 
 @log
-def get_llm_response(input: Any, use_tools: bool = False, text_format=None, model: str = "gpt-5-mini") -> Any:
+async def get_llm_response(input: Any, use_tools: bool = False, text_format=None, model: str = "gpt-5-mini") -> Any:
     if not use_tools:
         if text_format is None:
-            response = llm_client.responses.create(model=model, input=input)
+            response = await llm_client.responses.create(model=model, input=input)
             return response.output_text
-        response = llm_client.responses.parse(model=model, input=input, text_format=text_format)
+        response = await llm_client.responses.parse(model=model, input=input, text_format=text_format)
         return response.output_parsed
 
     create_kwargs = dict(model=model, tools=[SEARCH_CORPUS_TOOL], tool_choice="auto")
     if text_format is not None:
-        response = llm_client.responses.parse(input=input, text_format=text_format, **create_kwargs)
+        response = await llm_client.responses.parse(input=input, text_format=text_format, **create_kwargs)
     else:
-        response = llm_client.responses.create(input=input, **create_kwargs)
+        response = await llm_client.responses.create(input=input, **create_kwargs)
 
     max_tool_rounds = 8
     for round_num in range(max_tool_rounds):
@@ -89,8 +90,8 @@ def get_llm_response(input: Any, use_tools: bool = False, text_format=None, mode
             tool_choice="auto",
         )
         if text_format is not None:
-            response = llm_client.responses.parse(text_format=text_format, **call_kwargs)
+            response = await llm_client.responses.parse(text_format=text_format, **call_kwargs)
         else:
-            response = llm_client.responses.create(**call_kwargs)
+            response = await llm_client.responses.create(**call_kwargs)
 
     return response.output_parsed if text_format is not None else response.output_text

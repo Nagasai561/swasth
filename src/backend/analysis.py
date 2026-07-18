@@ -1,5 +1,4 @@
 from pydantic import BaseModel, Field
-import logging
 
 from llm import get_llm_response
 from measurements import Measurements
@@ -31,7 +30,7 @@ You are given a user's blood test report results and the user's medical history,
 The user isn't a medical professional, so try to use simple language yet retain important medical terms/explanations when necessary.
 """
 
-def analyze_blood_test_results(measurements: Measurements, user_info: UserMedicalInfo, language: str = "en") -> AnalysisResult | None:
+async def analyze_blood_test_results(measurements: Measurements, user_info: UserMedicalInfo, language: str = "en") -> AnalysisResult | None:
     output_language = LANGUAGE_NAMES.get(language, "English")
     input = [
         {"role": "system", "content": f"{ANALYSIS_PROMPT}\nReturn every user-facing string in {output_language}."},
@@ -45,5 +44,5 @@ def analyze_blood_test_results(measurements: Measurements, user_info: UserMedica
             ],
         },
     ]
-    response = get_llm_response(input=input, use_tools=True, text_format=AnalysisResult, model=MODEL)
+    response = await get_llm_response(input=input, use_tools=True, text_format=AnalysisResult, model=MODEL)
     return response

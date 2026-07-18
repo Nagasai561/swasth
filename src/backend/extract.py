@@ -1,6 +1,7 @@
 import base64
 import sys
 from pathlib import Path
+import asyncio
 
 import pymupdf
 from llm import get_llm_response
@@ -20,7 +21,7 @@ def encode_bytes_base64(imgbytes: bytes):
     return encoded_bytes.decode("utf-8")
 
 
-def get_data_from_imgbytes(imgbytes: bytes, img_ext: str) -> Measurements | None:
+async def get_data_from_imgbytes(imgbytes: bytes, img_ext: str) -> Measurements | None:
     img_base64 = encode_bytes_base64(imgbytes)
     input=[
         {"role": "system", "content": EXTRACTION_PROMPT},
@@ -35,10 +36,10 @@ def get_data_from_imgbytes(imgbytes: bytes, img_ext: str) -> Measurements | None
             ],
         },
     ]
-    response = get_llm_response(input=input, use_tools=False, text_format=Measurements, model=MODEL)
+    response = await get_llm_response(input=input, use_tools=False, text_format=Measurements, model=MODEL)
     return response
 
-def get_data_from_filebytes(filebytes: bytes, file_ext: str) -> Measurements | None:
+async def get_data_from_filebytes(filebytes: bytes, file_ext: str) -> Measurements | None:
     if file_ext == ".pdf":
         doc = pymupdf.open(stream=filebytes, filetype="pdf")
         imgbytes_container: list[bytes] = []
@@ -52,10 +53,13 @@ def get_data_from_filebytes(filebytes: bytes, file_ext: str) -> Measurements | N
         raise ValueError(f"Unsupported file extension: {file_ext}")
 
     extracted_data = Measurements(collection=[])
-    for imgbytes in imgbytes_container:
-        extracted_page_data = get_data_from_imgbytes(imgbytes, file_ext[1:])
-        if extracted_page_data is not None:
-            extracted_data.collection.extend(extracted_page_data.collection)
+    results = await asyncio.gather(
+        *[get_data_from_imgbytes(imgbytes, file_ext[1:]) for imgbytes in imgbytes_container]
+    )
+
+    for measurement_result in results:
+        if measurement_result is not None:
+            extracted_data.collection.extend(measurement_result.collection)
 
     return extracted_data
 
@@ -66,5 +70,5 @@ if __name__ == "__main__":
     filepath = Path(sys.argv[1])
     ext = filepath.suffix.lower()
     filebytes = filepath.read_bytes()
-    extracted_data = get_data_from_filebytes(filebytes, ext)
+    extracted_data = asyncio.run(get_data_from_filebytes(filebytes, ext))
     rprint(extracted_data)

@@ -4,6 +4,7 @@ from logging import FileHandler
 from pathlib import Path
 from rich.logging import RichHandler
 import time
+import asyncio
 
 from fastapi import FastAPI, File, UploadFile, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
@@ -82,7 +83,7 @@ class UploadFileResponse(BaseModel):
 
 # TODO: Handle user_id in a better way, maybe through authentication or session management
 @app.post("/upload_file")
-def upload_file(user_id: int, lang: Literal["en", "hi", "te"] = "en", file: UploadFile = File(...)):
+async def upload_file(user_id: int, lang: Literal["en", "hi", "te"] = "en", file: UploadFile = File(...)):
     logging.info("Received file upload request for user_id: %d with language: %s and file: %s", user_id, lang, file.filename)
 
     start = time.perf_counter()
@@ -91,7 +92,8 @@ def upload_file(user_id: int, lang: Literal["en", "hi", "te"] = "en", file: Uplo
         raise HTTPException(status_code=400, detail="Unsupported file type")
 
     file_ext = MIME_TYPE_TO_EXTENSION[file.content_type]
-    extracted_data = get_data_from_filebytes(file.file.read(), file_ext)
+    extracted_data = await get_data_from_filebytes(file.file.read(), file_ext)
+
     if extracted_data is None:
         logging.info("Failed to extract data from the uploaded file: %s", file.filename)
         raise HTTPException(status_code=400, detail="Failed to extract data from the uploaded file")
@@ -101,7 +103,7 @@ def upload_file(user_id: int, lang: Literal["en", "hi", "te"] = "en", file: Uplo
         logging.info("User not found for user_id: %d", user_id)
         raise HTTPException(status_code=404, detail="User not found")
 
-    analysis = analyze_blood_test_results(extracted_data, user_info, lang)
+    analysis = await analyze_blood_test_results(extracted_data, user_info, lang)
     if analysis is None:
         raise HTTPException(status_code=500, detail="Failed to analyze the extracted data")
 
