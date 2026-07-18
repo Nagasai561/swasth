@@ -4,10 +4,12 @@ from pathlib import Path
 
 from user_medical_info import UserMedicalInfo
 
-DB_PATH = (Path(__file__).parent / "runtime_files" / "user_info.db").resolve()
+runtime_dir = Path(__file__).resolve().parent / "runtime_files"
+DB_PATH = (runtime_dir / "user_info.db").resolve()
 
 
 def _get_connection() -> sqlite3.Connection:
+    runtime_dir.mkdir(parents=True, exist_ok=True)
     return sqlite3.connect(DB_PATH)
 
 

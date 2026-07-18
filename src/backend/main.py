@@ -22,11 +22,13 @@ from user_info_db import (
     update_user_medical_info_by_id,
 )
 
-logfile = Path(".").parent / "runtime_files" / "app.log"
+runtime_dir = Path(__file__).resolve().parent / "runtime_files"
+runtime_dir.mkdir(parents=True, exist_ok=True)
+logfile = runtime_dir / "app.log"
 logging.basicConfig(
     level=logging.INFO,
     format="%(asctime)s - %(levelname)s - %(message)s",
-    handlers=[RichHandler(), FileHandler(logfile, mode='w')]
+    handlers=[RichHandler(), FileHandler(logfile, mode="w")],
 )
 
 app = FastAPI()
