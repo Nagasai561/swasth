@@ -34,7 +34,7 @@ def get_data_from_imgbytes(imgbytes: bytes, img_ext: str) -> Measurements | None
                 },
             ],
         },
-    ],
+    ]
     response = get_llm_response(input=input, use_tools=False, text_format=Measurements, model=MODEL)
     return response
 
