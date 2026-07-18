@@ -3,7 +3,7 @@ import sys
 from pathlib import Path
 
 import pymupdf
-from llm import llm_client
+from llm import get_llm_response
 from measurements import Measurements
 
 
@@ -22,25 +22,21 @@ def encode_bytes_base64(imgbytes: bytes):
 
 def get_data_from_imgbytes(imgbytes: bytes, img_ext: str) -> Measurements | None:
     img_base64 = encode_bytes_base64(imgbytes)
-    response = llm_client.responses.parse(
-        model=MODEL,
-        input=[
-            {"role": "system", "content": EXTRACTION_PROMPT},
-            {  # pyright: ignore[reportArgumentType]
-                "role": "user",
-                "content": [
-                    {"type": "input_text", "text": "Extract data from this image"},
-                    {
-                        "type": "input_image",
-                        "image_url": f"data:image/{img_ext};base64,{img_base64}",
-                    },
-                ],
-            },
-        ],
-        text_format=Measurements,
-    )
-
-    return response.output_parsed
+    input=[
+        {"role": "system", "content": EXTRACTION_PROMPT},
+        {  # pyright: ignore[reportArgumentType]
+            "role": "user",
+            "content": [
+                {"type": "input_text", "text": "Extract data from this image"},
+                {
+                    "type": "input_image",
+                    "image_url": f"data:image/{img_ext};base64,{img_base64}",
+                },
+            ],
+        },
+    ],
+    response = get_llm_response(input=input, use_tools=False, text_format=Measurements, model=MODEL)
+    return response
 
 def get_data_from_filebytes(filebytes: bytes, file_ext: str) -> Measurements | None:
     if file_ext == ".pdf":

@@ -25,7 +25,7 @@ uv run uvicorn main:app --host 0.0.0.0 --port 8000
 1. Create user medical info (returns `user_id`):
 
 ```bash
-curl -X POST "http://localhost:8000/user_medical_info" \
+curl -X POST "http://localhost:8000/create_user_medical_info" \
   -H "Content-Type: application/json" \
   -d '{
     "age": 30,
@@ -52,6 +52,31 @@ curl -X POST "http://localhost:8000/user_medical_info" \
 ```bash
 curl -X POST "http://localhost:8000/upload_file?user_id=0" \
   -F "file=@/absolute/path/to/report.pdf"
+```
+
+3. Update user medical info for an existing `user_id`:
+
+```bash
+curl -X PUT "http://localhost:8000/update_user_medical_info/0" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "age": 31,
+    "weight": 72,
+    "height": 170,
+    "sex": "Male",
+    "pregnant": false,
+    "existing_conditions": ["Prediabetes"],
+    "current_medications": ["None"],
+    "lifestyle": {
+      "smoking": "Never",
+      "alcohol": "Occasionally",
+      "exercise": "3-5 days/week",
+      "diet": "Mixed",
+      "sleep": "7-8 hours"
+    },
+    "family_history": ["Diabetes"],
+    "symptoms": ["Fatigue or weakness"]
+  }'
 ```
 
 Supported upload types: `.pdf`, `.jpeg`, `.jpg`, `.png`.

@@ -1,6 +1,6 @@
 from pydantic import BaseModel, Field
 
-from llm import llm_client
+from llm import get_llm_response
 from measurements import Measurements
 from user_medical_info import UserMedicalInfo
 
@@ -32,20 +32,17 @@ The user isn't a medical professional, so try to use simple language yet retain 
 
 def analyze_blood_test_results(measurements: Measurements, user_info: UserMedicalInfo, language: str = "en") -> AnalysisResult | None:
     output_language = LANGUAGE_NAMES.get(language, "English")
-    response = llm_client.responses.parse(
-        model=MODEL,
-        input=[
-            {"role": "system", "content": f"{ANALYSIS_PROMPT}\nReturn every user-facing string in {output_language}."},
-            {
-                "role": "user",
-                "content": [
-                    {"type": "input_text", "text": "Analyze the following blood test results and user information"},
+    input = [
+        {"role": "system", "content": f"{ANALYSIS_PROMPT}\nReturn every user-facing string in {output_language}."},
+        {
+            "role": "user",
+            "content": [
+                {"type": "input_text", "text": "Analyze the following blood test results and user information"},
                     {"type": "input_text", "text": f"Output language: {output_language}"},
-                    {"type": "input_text", "text": f"Blood Test Results:\n{measurements.model_dump_json()}"},
-                    {"type": "input_text", "text": f"User Information:\n{user_info.model_dump_json()}"},
-                ],
-            },
-        ],
-        text_format=AnalysisResult,
-    )
-    return response.output_parsed
+                {"type": "input_text", "text": f"Blood Test Results:\n{measurements.model_dump_json()}"},
+                {"type": "input_text", "text": f"User Information:\n{user_info.model_dump_json()}"},
+            ],
+        },
+    ]
+    response = get_llm_response(input=input, use_tools=True, text_format=AnalysisResult, model=MODEL)
+    return response
