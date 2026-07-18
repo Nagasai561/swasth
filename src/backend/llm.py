@@ -4,6 +4,7 @@ from typing import Any
 
 from dotenv import load_dotenv
 from openai import OpenAI
+from function_log import log
 
 dotenv_filepath = (Path(__file__).parent / ".env").resolve()
 if not dotenv_filepath.exists():
@@ -58,6 +59,7 @@ def _run_tool_calls(response: Any) -> list[dict[str, Any]]:
 def _requires_tool_calls(response: Any) -> bool:
     return any(item.type == "function_call" for item in response.output)
 
+@log
 def get_llm_response(input: Any, use_tools: bool = False, text_format=None, model: str = "gpt-5-mini") -> Any:
     if not use_tools:
         if text_format is None:
@@ -90,7 +92,5 @@ def get_llm_response(input: Any, use_tools: bool = False, text_format=None, mode
             response = llm_client.responses.parse(text_format=text_format, **call_kwargs)
         else:
             response = llm_client.responses.create(**call_kwargs)
-    else:
-        print("[WARN] Max tool rounds hit; model may still want to call tools.")
 
     return response.output_parsed if text_format is not None else response.output_text

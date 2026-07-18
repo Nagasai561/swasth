@@ -1,4 +1,5 @@
 from pydantic import BaseModel, Field
+import logging
 
 from llm import get_llm_response
 from measurements import Measurements

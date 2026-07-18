@@ -5,6 +5,7 @@ from pydantic import BaseModel, Field
 
 from llm import llm_client
 from rag.config import DEFAULT_INDEX_NAME, DEFAULT_NAMESPACE, DEFAULT_TOP_K, EMBEDDING_MODEL
+from function_log import log
 
 
 class RetrievedPassage(BaseModel):
@@ -32,7 +33,7 @@ def _get_index():
 def _get_namespace() -> str:
     return os.getenv("PINECONE_NAMESPACE", DEFAULT_NAMESPACE).strip() or DEFAULT_NAMESPACE
 
-
+@log
 def search_blood_test_corpus(query: str, top_k: int = DEFAULT_TOP_K) -> list[RetrievedPassage]:
     if top_k <= 0:
         raise ValueError("top_k must be greater than 0")

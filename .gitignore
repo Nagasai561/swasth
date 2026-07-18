@@ -1,6 +1,6 @@
 reports/*
 .env
-*.db
+runtime_files/*
 
 # Python
 __pycache__/
