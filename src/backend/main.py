@@ -3,17 +3,30 @@ from user_medical_info import UserMedicalInfo
 from extract import get_data_from_filebytes, Measurements
 from analysis import analyze_blood_test_results, AnalysisResult
 from pydantic import BaseModel
+from user_info_db import (
+    create_user_medical_info,
+    get_user_medical_info_by_id,
+    init_user_info_db,
+    update_user_medical_info_by_id,
+)
 
 app = FastAPI()
-user_id_to_user: dict[int, UserMedicalInfo] = {}
+init_user_info_db()
 
-@app.post("/user_medical_info")
+@app.post("/create_user_medical_info")
 def collect_user_medical_info(data: UserMedicalInfo):
-    user_id = len(user_id_to_user)
-    user_id_to_user[user_id] = data
+    user_id = create_user_medical_info(data)
     return {
         "user_id": user_id
     }
+
+
+@app.put("/update_user_medical_info/{user_id}")
+def update_user_medical_info(user_id: int, data: UserMedicalInfo):
+    updated = update_user_medical_info_by_id(user_id, data)
+    if not updated:
+        raise HTTPException(status_code=404, detail="User not found")
+    return {"user_id": user_id}
 
 SUPPORTED_MIME_TYPES = ["image/jpeg", "image/png", "image/jpg", "application/pdf"]
 MIME_TYPE_TO_EXTENSION = {
@@ -38,7 +51,7 @@ def upload_file(user_id: int, file: UploadFile = File(...)):
     if extracted_data is None:
         raise HTTPException(status_code=400, detail="Failed to extract data from the uploaded file")
 
-    user_info = user_id_to_user.get(user_id)
+    user_info = get_user_medical_info_by_id(user_id)
     if user_info is None:
         raise HTTPException(status_code=404, detail="User not found")
 

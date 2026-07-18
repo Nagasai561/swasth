@@ -6,7 +6,7 @@ This document is the frontend integration source of truth for the currently expo
 
 - **Framework:** FastAPI
 - **Local base URL:** `http://localhost:8000`
-- **Current storage behavior:** User medical info is stored in-memory (`user_id_to_user`) and is lost on server restart.
+- **Current storage behavior:** User medical info is stored in SQLite (`src/backend/user_info.db`) and persists across restarts.
 
 ## Data Models Used by Endpoints
 
@@ -120,7 +120,7 @@ Field types:
     "suggested_diet": ["Increase iron-rich foods"],
     "suggested_lifestyle_changes": ["Improve sleep consistency"]
   },
-  "measuremnts": {
+  "measurements": {
     "collection": [
       {
         "category": "Complete Blood Count",
@@ -140,13 +140,13 @@ Field types:
 
 Field types:
 - `analysis_result`: `AnalysisResult`
-- `measuremnts`: `Measurements` (note: key is currently spelled `measuremnts` in backend response model)
+- `measurements`: `Measurements`
 
 ## Endpoints
 
-### `POST /user_medical_info`
+### `POST /create_user_medical_info`
 
-Creates a user record and returns a generated `user_id`.
+Creates a user record and returns a generated unique `user_id`.
 
 **Request**
 - Content-Type: `application/json`
@@ -158,6 +158,27 @@ Creates a user record and returns a generated `user_id`.
   "user_id": 0
 }
 ```
+
+### `PUT /update_user_medical_info/{user_id}`
+
+Updates an existing user's medical info.
+
+**Request**
+- Content-Type: `application/json`
+- Path parameter:
+  - `user_id` (`int`, required)
+- Body: `UserMedicalInfo`
+
+**Success response (`200`)**
+```json
+{
+  "user_id": 0
+}
+```
+
+**Error responses**
+- `404`:
+  - `"User not found"` (missing or unknown `user_id`)
 
 ### `POST /upload_file`
 
@@ -190,5 +211,5 @@ Supported file MIME types:
 
 ## Frontend Integration Notes
 
-- Call `/user_medical_info` first and store returned `user_id`; `/upload_file` depends on it.
+- Call `/create_user_medical_info` first and store returned `user_id`; `/upload_file` depends on it.
 - For list-based medical history/symptom fields, frontend can offer dropdown options from backend literals and also allow custom free-text values ("Other"), because backend accepts `str` entries.
