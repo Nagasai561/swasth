@@ -200,6 +200,12 @@ export function makeReportAnalysis(lang: LanguageCode): ReportAnalysisResponse {
       },
       lang
     ),
+    analysis: {
+      anomalies: ["Cholesterol is a bit high", "Average sugar is higher than ideal", "Blood strength looks low"],
+      possible_causes: ["Diet pattern", "Low iron intake", "Recent lifestyle changes"],
+      suggested_diet: ["Add more fibre-rich foods", "Pair iron-rich foods with vitamin C", "Keep refined carbohydrates modest"],
+      suggested_lifestyle_changes: ["Walk after meals", "Keep sleep consistent"]
+    },
     groups: panels.map((panel) => ({
       panel,
       values: values.filter((value) => value.panel === panel)

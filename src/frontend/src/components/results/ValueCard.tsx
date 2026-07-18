@@ -16,9 +16,16 @@ const statusKey = {
   attention: "common.attention"
 };
 
+const summaryKey = {
+  good: "results.value.inRange",
+  watch: "results.value.watch",
+  attention: "results.value.attention"
+};
+
 export function ValueCard({ value }: ValueCardProps) {
   const { t } = useTranslation();
   const [showMedical, setShowMedical] = useState(false);
+  const range = `${value.ref_low}-${value.ref_high} ${value.unit}`;
 
   return (
     <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.24 }}>
@@ -27,12 +34,12 @@ export function ValueCard({ value }: ValueCardProps) {
           <div className="flex items-start justify-between gap-3">
             <div className="space-y-2">
               <StatusBadge flag={value.flag} label={t(statusKey[value.flag])} />
-              <h3 className="font-serif text-2xl font-semibold leading-tight text-pine">{value.plain_summary}</h3>
+              <h3 className="font-serif text-2xl font-semibold leading-tight text-pine">{t(summaryKey[value.flag], { name: value.test_name })}</h3>
             </div>
           </div>
         </CardHeader>
         <CardContent className="space-y-4">
-          <p className="text-sm leading-6 text-warmgray">{value.plain_explanation}</p>
+          <p className="text-sm leading-6 text-warmgray">{t("results.value.explanation", { value: value.value, unit: value.unit, range })}</p>
           <div className="grid grid-cols-2 gap-3 rounded-soft bg-paper p-3 text-sm">
             <div>
               <p className="text-xs font-semibold uppercase tracking-wide text-warmgray">{t("common.value")}</p>

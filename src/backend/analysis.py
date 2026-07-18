@@ -18,21 +18,29 @@ class AnalysisResult(BaseModel):
 
 
 MODEL = "gpt-5-mini"
+LANGUAGE_NAMES = {
+    "en": "English",
+    "hi": "Hindi",
+    "te": "Telugu",
+}
+
 ANALYSIS_PROMPT = """
 You are an expert medical analyst.
 You are given a user's blood test report results and the user's medical history, current medications, lifestyle, family history, and symptoms.
 The user isn't a medical professional, so try to use simple language yet retain important medical terms/explanations when necessary.
 """
 
-def analyze_blood_test_results(measurements: Measurements, user_info: UserMedicalInfo) -> AnalysisResult | None:
+def analyze_blood_test_results(measurements: Measurements, user_info: UserMedicalInfo, language: str = "en") -> AnalysisResult | None:
+    output_language = LANGUAGE_NAMES.get(language, "English")
     response = llm_client.responses.parse(
         model=MODEL,
         input=[
-            {"role": "system", "content": ANALYSIS_PROMPT},
+            {"role": "system", "content": f"{ANALYSIS_PROMPT}\nReturn every user-facing string in {output_language}."},
             {
                 "role": "user",
                 "content": [
                     {"type": "input_text", "text": "Analyze the following blood test results and user information"},
+                    {"type": "input_text", "text": f"Output language: {output_language}"},
                     {"type": "input_text", "text": f"Blood Test Results:\n{measurements.model_dump_json()}"},
                     {"type": "input_text", "text": f"User Information:\n{user_info.model_dump_json()}"},
                 ],

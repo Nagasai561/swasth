@@ -7,7 +7,7 @@ from llm import llm_client
 from measurements import Measurements
 
 
-MODEL = "gpt-5-mini"
+MODEL = "gpt-5.4-mini"
 EXTRACTION_PROMPT = """
 You are expert at structured data extraction.
 You are given a medical report of a user's blood test.

@@ -1,4 +1,4 @@
-import { Activity, Droplets, Heart, Leaf, ShieldPlus, Wheat } from "lucide-react";
+import { Activity, ClipboardList, Droplets, Heart, Leaf, ShieldPlus, Wheat } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import type { ReportGroup, ReportPanel } from "../../lib/types";
 import { ValueCard } from "./ValueCard";
@@ -13,7 +13,8 @@ const panelIcons = {
   blood_health: Droplets,
   kidneys: Activity,
   liver: Leaf,
-  thyroid: ShieldPlus
+  thyroid: ShieldPlus,
+  general: ClipboardList
 } satisfies Record<ReportPanel, typeof Heart>;
 
 export function PanelSection({ group }: PanelSectionProps) {

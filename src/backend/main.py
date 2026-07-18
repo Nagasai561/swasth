@@ -1,10 +1,25 @@
+from typing import Literal
+
 from fastapi import FastAPI, File, UploadFile, HTTPException
+from fastapi.middleware.cors import CORSMiddleware
 from user_medical_info import UserMedicalInfo
 from extract import get_data_from_filebytes, Measurements
 from analysis import analyze_blood_test_results, AnalysisResult
 from pydantic import BaseModel
 
 app = FastAPI()
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=[
+        "http://localhost:5173",
+        "http://127.0.0.1:5173",
+    ],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
 user_id_to_user: dict[int, UserMedicalInfo] = {}
 
 @app.post("/user_medical_info")
@@ -29,7 +44,7 @@ class UploadFileResponse(BaseModel):
 
 # TODO: Handle user_id in a better way, maybe through authentication or session management
 @app.post("/upload_file")
-def upload_file(user_id: int, file: UploadFile = File(...)):
+def upload_file(user_id: int, lang: Literal["en", "hi", "te"] = "en", file: UploadFile = File(...)):
     if file.content_type not in SUPPORTED_MIME_TYPES:
         raise HTTPException(status_code=400, detail="Unsupported file type")
 
@@ -42,7 +57,7 @@ def upload_file(user_id: int, file: UploadFile = File(...)):
     if user_info is None:
         raise HTTPException(status_code=404, detail="User not found")
 
-    analysis = analyze_blood_test_results(extracted_data, user_info)
+    analysis = analyze_blood_test_results(extracted_data, user_info, lang)
     if analysis is None:
         raise HTTPException(status_code=500, detail="Failed to analyze the extracted data")
 
@@ -51,4 +66,4 @@ def upload_file(user_id: int, file: UploadFile = File(...)):
 
 if __name__ == "__main__":
     import uvicorn
-    uvicorn.run(app, host="0.0.0", port=8000)
+    uvicorn.run(app, host="0.0.0.0", port=8000)

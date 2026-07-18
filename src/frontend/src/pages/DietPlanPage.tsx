@@ -1,6 +1,7 @@
 import { FormEvent, useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { Send } from "lucide-react";
+import { Send, Upload } from "lucide-react";
+import { Link } from "react-router-dom";
 import { getDietPlan } from "../lib/api";
 import type { DietPlanResponse } from "../lib/types";
 import { useLanguage } from "../hooks/useLanguage";
@@ -25,7 +26,18 @@ export function DietPlanPage() {
   };
 
   if (!plan) {
-    return <p className="text-lg font-semibold text-warmgray">{t("common.loading")}</p>;
+    return (
+      <Card>
+        <CardContent className="space-y-4 pt-5">
+          <h1 className="font-serif text-3xl font-semibold text-pine">{t("diet.emptyTitle")}</h1>
+          <p className="text-warmgray">{t("diet.emptyBody")}</p>
+          <Link to="/upload" className="inline-flex min-h-11 items-center justify-center gap-2 rounded-soft bg-pine px-4 py-2 text-sm font-semibold text-white transition hover:bg-pine/90">
+            <Upload className="size-4" aria-hidden="true" />
+            {t("diet.emptyAction")}
+          </Link>
+        </CardContent>
+      </Card>
+    );
   }
 
   return (

@@ -31,3 +31,13 @@ textarea {
   outline: 3px solid rgba(217, 142, 43, 0.55);
   outline-offset: 2px;
 }
+
+@keyframes scan {
+  0% {
+    transform: translateY(-4rem);
+  }
+
+  100% {
+    transform: translateY(16rem);
+  }
+}

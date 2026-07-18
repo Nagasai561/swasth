@@ -1,19 +1,64 @@
 export type LanguageCode = "en" | "hi" | "te";
 
-export type Gender = "female" | "male" | "non_binary" | "prefer_not";
-export type DietPreference = "veg" | "non_veg" | "egg";
-export type ActivityLevel = "low" | "moderate" | "high";
-export type HealthGoal = "energy" | "weight" | "sugar" | "heart";
+export type Sex = "Male" | "Female";
+export type SmokingStatus = "Never" | "Former Smoker" | "Occasionally" | "Daily";
+export type AlcoholStatus = "Never" | "Occasionally" | "Weekly" | "Daily";
+export type ExerciseStatus = "None" | "1-2 days/week" | "3-5 days/week" | "6-7 days/week";
+export type BackendDiet = "Vegetarian" | "Vegan" | "Mixed";
+export type SleepStatus = "<5 hours" | "5-6 hours" | "7-8 hours" | "8+ hours";
 
 export type ReportFlag = "good" | "watch" | "attention";
-export type ReportPanel = "heart_fats" | "blood_sugar" | "blood_health" | "kidneys" | "liver" | "thyroid";
+export type ReportPanel = "heart_fats" | "blood_sugar" | "blood_health" | "kidneys" | "liver" | "thyroid" | "general";
+
+export interface LifestylePayload {
+  smoking: SmokingStatus;
+  alcohol: AlcoholStatus;
+  exercise: ExerciseStatus;
+  diet: BackendDiet;
+  sleep: SleepStatus;
+}
 
 export interface ProfilePayload {
   age: number;
-  gender: Gender;
-  dietPreference: DietPreference;
-  activityLevel: ActivityLevel;
-  goal: HealthGoal;
+  weight: number;
+  height: number;
+  sex: Sex;
+  pregnant: boolean;
+  existing_conditions: string[];
+  current_medications: string[];
+  lifestyle: LifestylePayload;
+  family_history: string[];
+  symptoms: string[];
+}
+
+export interface UserMedicalInfoResponse {
+  user_id: number;
+}
+
+export interface AnalysisResult {
+  anomalies: string[];
+  possible_causes: string[];
+  suggested_diet: string[];
+  suggested_lifestyle_changes: string[];
+}
+
+export interface BackendMeasurement {
+  category: string;
+  name: string;
+  observed_value: number;
+  nominal_range: {
+    lower_value: number;
+    upper_value: number;
+  };
+  unit: string;
+  concern: "Low" | "Medium" | "High";
+}
+
+export interface UploadFileResponse {
+  analysis_result: AnalysisResult;
+  measurements: {
+    collection: BackendMeasurement[];
+  };
 }
 
 export interface LocalizedText {
@@ -47,6 +92,7 @@ export interface ReportAnalysisResponse {
   report_date: string;
   summary: string;
   groups: ReportGroup[];
+  analysis: AnalysisResult;
 }
 
 export interface MealSuggestion {
