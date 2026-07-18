@@ -6,7 +6,7 @@ import { getReportAnalysis } from "../lib/api";
 import type { ReportAnalysisResponse } from "../lib/types";
 import { useLanguage } from "../hooks/useLanguage";
 import { PanelSection } from "../components/results/PanelSection";
-import { Card, CardContent, CardHeader } from "../components/ui/card";
+import { Card, CardContent } from "../components/ui/card";
 import { formatDate } from "../lib/utils";
 
 export function ResultsPage() {

@@ -1,17 +1,11 @@
 from pathlib import Path
 import json
 from typing import Any
-import asyncio
 
-from dotenv import load_dotenv
 from openai import AsyncOpenAI
 from function_log import log
 
-dotenv_filepath = (Path(__file__).parent / ".env").resolve()
-if not dotenv_filepath.exists():
-    raise FileNotFoundError(f"Could not find .env file at {dotenv_filepath}")
 
-load_dotenv(dotenv_filepath)
 llm_client = AsyncOpenAI()
 
 SEARCH_CORPUS_TOOL_NAME = "search_blood_test_corpus"

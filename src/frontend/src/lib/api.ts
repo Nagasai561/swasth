@@ -14,7 +14,7 @@ import type {
   UserMedicalInfoResponse
 } from "./types";
 
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL ?? "http://localhost:8000";
+const API_BASE_URL = (import.meta.env.VITE_API_BASE_URL ?? "").replace(/\/$/, "");
 const USER_ID_KEY = "swasth.userId";
 const PROFILE_KEY = "swasth.profile";
 const LATEST_UPLOAD_KEY = "swasth.latestUpload";
@@ -38,7 +38,7 @@ function getErrorMessage(error: unknown) {
 }
 
 async function request<T>(path: string, init?: RequestInit): Promise<T> {
-  const response = await fetch(`${API_BASE_URL}${path}`, init);
+  const response = await fetch(API_BASE_URL ? `${API_BASE_URL}${path}` : path, init);
   if (!response.ok) {
     let detail = `Request failed with ${response.status}`;
     try {
@@ -54,7 +54,7 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
 
 export async function submitProfile(profile: ProfilePayload, lang: LanguageCode): Promise<{ ok: true; profile: ProfilePayload; userId: number }> {
   void lang;
-  const result = await request<UserMedicalInfoResponse>("/user_medical_info", {
+  const result = await request<UserMedicalInfoResponse>("/create_user_medical_info", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(profile)

@@ -4,10 +4,13 @@ from logging import FileHandler
 from pathlib import Path
 from rich.logging import RichHandler
 import time
-import asyncio
 
+# this needs be first as it loads API keys from .env file if not found in environment variables
+import api_keys
 from fastapi import FastAPI, File, UploadFile, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import FileResponse
+from fastapi.staticfiles import StaticFiles
 from user_medical_info import UserMedicalInfo
 from extract import get_data_from_filebytes, Measurements
 from analysis import analyze_blood_test_results, AnalysisResult
@@ -19,14 +22,19 @@ from user_info_db import (
     update_user_medical_info_by_id,
 )
 
-app = FastAPI()
-
 logfile = Path(".").parent / "runtime_files" / "app.log"
 logging.basicConfig(
     level=logging.INFO,
     format="%(asctime)s - %(levelname)s - %(message)s",
     handlers=[RichHandler(), FileHandler(logfile, mode='w')]
 )
+
+app = FastAPI()
+
+frontend_dist = Path(__file__).resolve().parent / "frontend_dist"
+if (frontend_dist / "assets").exists():
+    app.mount("/assets", StaticFiles(directory=frontend_dist / "assets"), name="assets")
+
 
 app.add_middleware(
     CORSMiddleware,
@@ -111,6 +119,25 @@ async def upload_file(user_id: int, lang: Literal["en", "hi", "te"] = "en", file
 
     logging.info("File upload and analysis completed for user_id: %d in %.1f seconds", user_id, end - start)
     return UploadFileResponse(analysis_result=analysis, measurements=extracted_data)
+
+@app.get("/", include_in_schema=False)
+def serve_frontend_root():
+    index_file = frontend_dist / "index.html"
+    if index_file.exists():
+        return FileResponse(index_file)
+    raise HTTPException(status_code=404, detail="Frontend build not found")
+
+
+@app.get("/{full_path:path}", include_in_schema=False)
+def serve_frontend_app(full_path: str):
+    if full_path in {"docs", "redoc", "openapi.json"} or full_path.startswith("assets/"):
+        raise HTTPException(status_code=404)
+
+    index_file = frontend_dist / "index.html"
+    if index_file.exists():
+        return FileResponse(index_file)
+
+    raise HTTPException(status_code=404, detail="Frontend build not found")
 
 
 if __name__ == "__main__":

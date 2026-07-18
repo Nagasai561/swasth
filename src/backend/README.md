@@ -1,12 +1,13 @@
 ## Setting up the environment for the Swasth Backend
 
 1. Install `uv` (if not already)
-2. From the repository root, run:
+2. Go to backend folder and install dependencies, run:
 ```bash
+cd ./src/backend
 uv sync
 cp src/backend/.env.example src/backend/.env
 ```
-3. Fill up `src/backend/.env` (`OPENAI_API_KEY=...`)
+3. Fill up `src/backend/.env` (`OPENAI_API_KEY=...`) or pass as environment variable when running the server.
 
 
 ## Code to run the backend server
@@ -14,7 +15,7 @@ cp src/backend/.env.example src/backend/.env
 From `src/backend`:
 
 ```bash
-uv run uvicorn main:app --host 0.0.0.0 --port 8000
+uv run python3 -O -m uvicorn main:app --host 0.0.0.0 --port 8000
 ```
 
 (Note: add `--reload` for development mode)

@@ -16,15 +16,8 @@ class RetrievedPassage(BaseModel):
     score: float = Field(description="Vector similarity score from Pinecone")
 
 
-def _require_env(var_name: str) -> str:
-    value = os.getenv(var_name, "").strip()
-    if not value:
-        raise ValueError(f"Missing required environment variable: {var_name}")
-    return value
-
-
 def _get_index():
-    pinecone_api_key = _require_env("PINECONE_API_KEY")
+    pinecone_api_key = os.environ.get("PINECONE_API_KEY")
     index_name = os.getenv("PINECONE_INDEX_NAME", DEFAULT_INDEX_NAME).strip() or DEFAULT_INDEX_NAME
     pc = Pinecone(api_key=pinecone_api_key)
     return pc.Index(index_name)
