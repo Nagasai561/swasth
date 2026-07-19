@@ -1,29 +1,22 @@
-import { FormEvent, useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { Send, Upload } from "lucide-react";
+import { Upload } from "lucide-react";
 import { Link } from "react-router-dom";
 import { getDietPlan } from "../lib/api";
 import type { DietPlanResponse } from "../lib/types";
 import { useLanguage } from "../hooks/useLanguage";
 import { MealCard } from "../components/diet/MealCard";
-import { Button } from "../components/ui/button";
 import { Card, CardContent } from "../components/ui/card";
 
 export function DietPlanPage() {
   const { t } = useTranslation();
   const { language } = useLanguage();
   const [plan, setPlan] = useState<DietPlanResponse | null>(null);
-  const [message, setMessage] = useState("");
 
   useEffect(() => {
     setPlan(null);
     void getDietPlan(language).then(setPlan);
   }, [language]);
-
-  const submitRefinement = (event: FormEvent<HTMLFormElement>) => {
-    event.preventDefault();
-    setMessage("");
-  };
 
   if (!plan) {
     return (
@@ -59,25 +52,6 @@ export function DietPlanPage() {
         ))}
       </div>
 
-      <Card>
-        <CardContent className="pt-5">
-          <form onSubmit={submitRefinement} className="flex flex-col gap-3 sm:flex-row">
-            <label className="flex-1">
-              <span className="mb-2 block text-sm font-semibold text-warmgray">{t("diet.refine")}</span>
-              <input
-                value={message}
-                onChange={(event) => setMessage(event.target.value)}
-                placeholder={t("diet.refinePlaceholder")}
-                className="w-full rounded-soft border border-line bg-paper px-4 py-3 text-charcoal"
-              />
-            </label>
-            <Button type="submit" className="self-end" disabled={!message.trim()}>
-              <Send className="size-4" aria-hidden="true" />
-              {t("diet.send")}
-            </Button>
-          </form>
-        </CardContent>
-      </Card>
     </div>
   );
 }

@@ -1,0 +1,28 @@
+{
+  "id": "user-1",
+  "label": "User 1",
+  "description": "Image report sample",
+  "report": {
+    "fileName": "sample-test.jpeg",
+    "assetPath": "/assets/samples/sample-test.jpeg",
+    "mimeType": "image/jpeg"
+  },
+  "profile": {
+    "age": 48,
+    "weight": 84,
+    "height": 164,
+    "sex": "Female",
+    "pregnant": false,
+    "existing_conditions": ["Iron deficiency"],
+    "current_medications": ["Iron supplement", "Vitamin supplements (B12, D, folic acid, multivitamin)"],
+    "lifestyle": {
+      "smoking": "Never",
+      "alcohol": "Never",
+      "exercise": "3-5 days/week",
+      "diet": "Vegetarian",
+      "sleep": "7-8 hours"
+    },
+    "family_history": ["Anemia", "Thyroid disease"],
+    "symptoms": ["Fatigue or weakness", "Dizziness or fainting"]
+  }
+}

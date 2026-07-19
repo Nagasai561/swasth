@@ -1,4 +1,4 @@
-import { Activity, Apple, FileClock, FileUp, HeartPulse } from "lucide-react";
+import { Activity, Apple, FileUp, HeartPulse } from "lucide-react";
 import type { ReactNode } from "react";
 import { NavLink } from "react-router-dom";
 import { useTranslation } from "react-i18next";
@@ -13,8 +13,7 @@ const navItems = [
   { to: "/", labelKey: "nav.onboarding", icon: HeartPulse },
   { to: "/upload", labelKey: "nav.upload", icon: FileUp },
   { to: "/results", labelKey: "nav.results", icon: Activity },
-  { to: "/diet", labelKey: "nav.diet", icon: Apple },
-  { to: "/history", labelKey: "nav.history", icon: FileClock }
+  { to: "/diet", labelKey: "nav.diet", icon: Apple }
 ];
 
 export function AppShell({ children }: AppShellProps) {
@@ -62,7 +61,7 @@ export function AppShell({ children }: AppShellProps) {
         </div>
       </header>
       <main className="mx-auto max-w-6xl px-4 pb-28 pt-6 md:ml-64 md:px-8 md:pb-10 md:pt-8">{children}</main>
-      <nav className="fixed bottom-0 left-0 right-0 z-30 grid grid-cols-5 border-t border-line bg-white px-2 py-2 shadow-soft md:hidden">
+      <nav className="fixed bottom-0 left-0 right-0 z-30 grid grid-cols-4 border-t border-line bg-white px-2 py-2 shadow-soft md:hidden">
         {navItems.map((item) => (
           <NavLink
             key={item.to}

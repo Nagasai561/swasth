@@ -1,0 +1,28 @@
+{
+  "id": "user-2",
+  "label": "User 2",
+  "description": "PDF report sample",
+  "report": {
+    "fileName": "test-report.pdf",
+    "assetPath": "/assets/samples/test-report.pdf",
+    "mimeType": "application/pdf"
+  },
+  "profile": {
+    "age": 50,
+    "weight": 82,
+    "height": 176,
+    "sex": "Female",
+    "pregnant": false,
+    "existing_conditions": ["Prediabetes", "High cholesterol"],
+    "current_medications": ["Cholesterol medication"],
+    "lifestyle": {
+      "smoking": "Never",
+      "alcohol": "Never",
+      "exercise": "1-2 days/week",
+      "diet": "Mixed",
+      "sleep": "5-6 hours"
+    },
+    "family_history": ["Diabetes", "Heart disease", "High cholesterol"],
+    "symptoms": ["Weight gain", "Shortness of breath"]
+  }
+}
