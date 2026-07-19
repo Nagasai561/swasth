@@ -54,8 +54,38 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
 
 export async function submitProfile(profile: ProfilePayload, lang: LanguageCode): Promise<{ ok: true; profile: ProfilePayload; userId: number }> {
   void lang;
+  const storedUserId = readUserId();
+  const result = await request<UserMedicalInfoResponse>(storedUserId ? `/update_user_medical_info/${encodeURIComponent(storedUserId)}` : "/create_user_medical_info", {
+    method: storedUserId ? "PUT" : "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(profile)
+  });
+
+  window.sessionStorage.setItem(USER_ID_KEY, String(result.user_id));
+  window.sessionStorage.setItem(PROFILE_KEY, JSON.stringify(profile));
+  return { ok: true, profile, userId: result.user_id };
+}
+
+export async function createProfile(profile: ProfilePayload): Promise<{ ok: true; profile: ProfilePayload; userId: number }> {
   const result = await request<UserMedicalInfoResponse>("/create_user_medical_info", {
     method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(profile)
+  });
+
+  window.sessionStorage.setItem(USER_ID_KEY, String(result.user_id));
+  window.sessionStorage.setItem(PROFILE_KEY, JSON.stringify(profile));
+  return { ok: true, profile, userId: result.user_id };
+}
+
+export async function updateProfile(profile: ProfilePayload): Promise<{ ok: true; profile: ProfilePayload; userId: number }> {
+  const userId = readUserId();
+  if (!userId) {
+    return createProfile(profile);
+  }
+
+  const result = await request<UserMedicalInfoResponse>(`/update_user_medical_info/${encodeURIComponent(userId)}`, {
+    method: "PUT",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(profile)
   });
@@ -108,6 +138,10 @@ export function readProfile(): ProfilePayload | null {
   } catch {
     return null;
   }
+}
+
+export function readUserId(): string | null {
+  return window.sessionStorage.getItem(USER_ID_KEY);
 }
 
 export function describeError(error: unknown) {

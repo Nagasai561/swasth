@@ -1,8 +1,8 @@
 import { ChangeEvent, useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useNavigate } from "react-router-dom";
-import { Check, Loader2, Minus, Plus } from "lucide-react";
-import { submitProfile } from "../lib/api";
+import { Check, Loader2, Minus, Pencil, Plus, X } from "lucide-react";
+import { readProfile, readUserId, submitProfile } from "../lib/api";
 import type { AlcoholStatus, BackendDiet, ExerciseStatus, ProfilePayload, Sex, SleepStatus, SmokingStatus } from "../lib/types";
 import { useLanguage } from "../hooks/useLanguage";
 import { Button } from "../components/ui/button";
@@ -116,15 +116,22 @@ export function OnboardingPage() {
   const [stepIndex, setStepIndex] = useState(0);
   const [isSaving, setIsSaving] = useState(false);
   const [isSaved, setIsSaved] = useState(false);
+  const [hasSavedProfile, setHasSavedProfile] = useState(() => Boolean(readUserId() && readProfile()));
+  const [isEditing, setIsEditing] = useState(() => !readUserId());
   const [error, setError] = useState("");
-  const [profile, setProfile] = useState<ProfilePayload>(defaultProfile);
+  const [profile, setProfile] = useState<ProfilePayload>(() => readProfile() ?? defaultProfile);
 
   const currentStep = steps[stepIndex];
   const progress = ((stepIndex + 1) / steps.length) * 100;
 
   const saveAndContinue = async () => {
     setError("");
-    if (stepIndex < steps.length - 1) {
+    if (hasSavedProfile && !isEditing) {
+      setIsEditing(true);
+      return;
+    }
+
+    if (!hasSavedProfile && stepIndex < steps.length - 1) {
       setStepIndex((current) => current + 1);
       return;
     }
@@ -133,7 +140,11 @@ export function OnboardingPage() {
       setIsSaving(true);
       await submitProfile(normalizeProfile(profile), language);
       setIsSaved(true);
-      navigate("/upload");
+      setHasSavedProfile(true);
+      setIsEditing(false);
+      if (!hasSavedProfile) {
+        navigate("/upload");
+      }
     } catch (saveError) {
       setError(saveError instanceof Error ? saveError.message : "Unable to save profile.");
     } finally {
@@ -145,7 +156,20 @@ export function OnboardingPage() {
     <div className="mx-auto max-w-5xl space-y-6">
       <div className="grid gap-5 lg:grid-cols-[1fr_280px]">
         <div className="space-y-3">
-          <p className="text-sm font-semibold text-turmeric">{t("onboarding.progress", { current: stepIndex + 1, total: steps.length })}</p>
+          <div className="flex flex-wrap items-center gap-3">
+            <p className="text-sm font-semibold text-turmeric">{t("onboarding.progress", { current: stepIndex + 1, total: steps.length })}</p>
+            {hasSavedProfile ? (
+              <button
+                type="button"
+                onClick={() => setIsEditing(true)}
+                disabled={isEditing || isSaving}
+                className="inline-flex min-h-9 items-center gap-2 rounded-soft border border-line bg-white px-3 text-sm font-semibold text-pine transition hover:bg-pine/5 disabled:cursor-not-allowed disabled:opacity-50"
+              >
+                <Pencil className="size-4" aria-hidden="true" />
+                {t("common.editProfile")}
+              </button>
+            ) : null}
+          </div>
           <h1 className="font-serif text-4xl font-bold tracking-normal text-pine md:text-5xl">{t("onboarding.title")}</h1>
           <p className="max-w-2xl text-lg leading-8 text-warmgray">A fuller profile helps the backend interpret your report with your lifestyle, symptoms, medications, and family history in mind.</p>
           <Progress value={progress} />
@@ -173,8 +197,8 @@ export function OnboardingPage() {
           <h2 className="font-serif text-3xl font-semibold text-charcoal">{stepTitle(currentStep)}</h2>
         </CardHeader>
         <CardContent className="space-y-6">
-          {currentStep === "basics" ? <BasicsStep profile={profile} setProfile={setProfile} /> : null}
-          {currentStep === "lifestyle" ? <LifestyleStep profile={profile} setProfile={setProfile} /> : null}
+          {currentStep === "basics" ? <BasicsStep profile={profile} setProfile={setProfile} disabled={!isEditing} /> : null}
+          {currentStep === "lifestyle" ? <LifestyleStep profile={profile} setProfile={setProfile} disabled={!isEditing} /> : null}
           {currentStep === "conditions" ? (
             <MultiSelectStep
               label="Existing conditions"
@@ -182,6 +206,7 @@ export function OnboardingPage() {
               options={existingConditionOptions}
               values={profile.existing_conditions}
               onChange={(existing_conditions) => setProfile((current) => ({ ...current, existing_conditions }))}
+              disabled={!isEditing}
             />
           ) : null}
           {currentStep === "medications" ? (
@@ -191,6 +216,7 @@ export function OnboardingPage() {
               options={medicationOptions}
               values={profile.current_medications}
               onChange={(current_medications) => setProfile((current) => ({ ...current, current_medications }))}
+              disabled={!isEditing}
             />
           ) : null}
           {currentStep === "family" ? (
@@ -200,6 +226,7 @@ export function OnboardingPage() {
               options={familyHistoryOptions}
               values={profile.family_history}
               onChange={(family_history) => setProfile((current) => ({ ...current, family_history }))}
+              disabled={!isEditing}
             />
           ) : null}
           {currentStep === "symptoms" ? (
@@ -209,6 +236,7 @@ export function OnboardingPage() {
               options={symptomOptions}
               values={profile.symptoms}
               onChange={(symptoms) => setProfile((current) => ({ ...current, symptoms }))}
+              disabled={!isEditing}
             />
           ) : null}
 
@@ -220,7 +248,7 @@ export function OnboardingPage() {
             </Button>
             <Button type="button" onClick={saveAndContinue} disabled={isSaving}>
               {isSaving ? <Loader2 className="size-4 animate-spin" aria-hidden="true" /> : isSaved ? <Check className="size-4" aria-hidden="true" /> : null}
-              {stepIndex === steps.length - 1 ? t("common.save") : t("common.continue")}
+              {hasSavedProfile && !isEditing ? t("common.editProfile") : hasSavedProfile ? t("common.save") : stepIndex === steps.length - 1 ? t("common.save") : t("common.continue")}
             </Button>
           </div>
         </CardContent>
@@ -229,14 +257,14 @@ export function OnboardingPage() {
   );
 }
 
-function BasicsStep({ profile, setProfile }: { profile: ProfilePayload; setProfile: React.Dispatch<React.SetStateAction<ProfilePayload>> }) {
+function BasicsStep({ profile, setProfile, disabled }: { profile: ProfilePayload; setProfile: React.Dispatch<React.SetStateAction<ProfilePayload>>; disabled?: boolean }) {
   return (
     <div className="grid gap-4 md:grid-cols-3">
-      <NumberField label="Age" min={1} max={110} value={profile.age} onChange={(age) => setProfile((current) => ({ ...current, age }))} suffix="years" />
-      <NumberField label="Weight" min={20} max={220} value={profile.weight} onChange={(weight) => setProfile((current) => ({ ...current, weight }))} suffix="kg" />
-      <NumberField label="Height" min={90} max={230} value={profile.height} onChange={(height) => setProfile((current) => ({ ...current, height }))} suffix="cm" />
+      <NumberField label="Age" min={1} max={110} value={profile.age} onChange={(age) => setProfile((current) => ({ ...current, age }))} suffix="years" disabled={disabled} />
+      <NumberField label="Weight" max={220} value={profile.weight} onChange={(weight) => setProfile((current) => ({ ...current, weight }))} suffix="kg" disabled={disabled} />
+      <NumberField label="Height" max={230} value={profile.height} onChange={(height) => setProfile((current) => ({ ...current, height }))} suffix="cm" disabled={disabled} />
       <div className="md:col-span-2">
-        <SegmentedControl<Sex> label="Sex" values={["Female", "Male"]} selected={profile.sex} onSelect={(sex) => setProfile((current) => ({ ...current, sex, pregnant: sex === "Female" ? current.pregnant : false }))} />
+        <SegmentedControl<Sex> label="Sex" values={["Female", "Male"]} selected={profile.sex} onSelect={(sex) => setProfile((current) => ({ ...current, sex, pregnant: sex === "Female" ? current.pregnant : false }))} disabled={disabled} />
       </div>
       <label className={cn("flex min-h-[74px] items-center justify-between rounded-soft border border-line bg-paper px-4 py-3", profile.sex !== "Female" && "opacity-55")}>
         <span>
@@ -246,7 +274,7 @@ function BasicsStep({ profile, setProfile }: { profile: ProfilePayload; setProfi
         <input
           type="checkbox"
           checked={profile.pregnant}
-          disabled={profile.sex !== "Female"}
+          disabled={disabled || profile.sex !== "Female"}
           onChange={(event) => setProfile((current) => ({ ...current, pregnant: event.target.checked }))}
           className="size-5 accent-pine"
         />
@@ -255,39 +283,30 @@ function BasicsStep({ profile, setProfile }: { profile: ProfilePayload; setProfi
   );
 }
 
-function LifestyleStep({ profile, setProfile }: { profile: ProfilePayload; setProfile: React.Dispatch<React.SetStateAction<ProfilePayload>> }) {
+function LifestyleStep({ profile, setProfile, disabled }: { profile: ProfilePayload; setProfile: React.Dispatch<React.SetStateAction<ProfilePayload>>; disabled?: boolean }) {
   return (
     <div className="grid gap-4 md:grid-cols-2">
-      <SelectField<SmokingStatus> label="Smoking" value={profile.lifestyle.smoking} options={["Never", "Former Smoker", "Occasionally", "Daily"]} onChange={(smoking) => setProfile((current) => ({ ...current, lifestyle: { ...current.lifestyle, smoking } }))} />
-      <SelectField<AlcoholStatus> label="Alcohol" value={profile.lifestyle.alcohol} options={["Never", "Occasionally", "Weekly", "Daily"]} onChange={(alcohol) => setProfile((current) => ({ ...current, lifestyle: { ...current.lifestyle, alcohol } }))} />
-      <SelectField<ExerciseStatus> label="Exercise" value={profile.lifestyle.exercise} options={["None", "1-2 days/week", "3-5 days/week", "6-7 days/week"]} onChange={(exercise) => setProfile((current) => ({ ...current, lifestyle: { ...current.lifestyle, exercise } }))} />
-      <SelectField<BackendDiet> label="Diet pattern" value={profile.lifestyle.diet} options={["Vegetarian", "Vegan", "Mixed"]} onChange={(diet) => setProfile((current) => ({ ...current, lifestyle: { ...current.lifestyle, diet } }))} />
+      <SelectField<SmokingStatus> label="Smoking" value={profile.lifestyle.smoking} options={["Never", "Former Smoker", "Occasionally", "Daily"]} onChange={(smoking) => setProfile((current) => ({ ...current, lifestyle: { ...current.lifestyle, smoking } }))} disabled={disabled} />
+      <SelectField<AlcoholStatus> label="Alcohol" value={profile.lifestyle.alcohol} options={["Never", "Occasionally", "Weekly", "Daily"]} onChange={(alcohol) => setProfile((current) => ({ ...current, lifestyle: { ...current.lifestyle, alcohol } }))} disabled={disabled} />
+      <SelectField<ExerciseStatus> label="Exercise" value={profile.lifestyle.exercise} options={["None", "1-2 days/week", "3-5 days/week", "6-7 days/week"]} onChange={(exercise) => setProfile((current) => ({ ...current, lifestyle: { ...current.lifestyle, exercise } }))} disabled={disabled} />
+      <SelectField<BackendDiet> label="Diet pattern" value={profile.lifestyle.diet} options={["Vegetarian", "Vegan", "Mixed"]} onChange={(diet) => setProfile((current) => ({ ...current, lifestyle: { ...current.lifestyle, diet } }))} disabled={disabled} />
       <div className="md:col-span-2">
-        <SegmentedControl<SleepStatus> label="Sleep" values={["<5 hours", "5-6 hours", "7-8 hours", "8+ hours"]} selected={profile.lifestyle.sleep} onSelect={(sleep) => setProfile((current) => ({ ...current, lifestyle: { ...current.lifestyle, sleep } }))} />
+        <SegmentedControl<SleepStatus> label="Sleep" values={["<5 hours", "5-6 hours", "7-8 hours", "8+ hours"]} selected={profile.lifestyle.sleep} onSelect={(sleep) => setProfile((current) => ({ ...current, lifestyle: { ...current.lifestyle, sleep } }))} disabled={disabled} />
       </div>
     </div>
   );
 }
 
-function NumberField({ label, min, max, value, suffix, onChange }: { label: string; min: number; max: number; value: number; suffix: string; onChange: (value: number) => void }) {
+function NumberField({ label, min, max, value, suffix, onChange, disabled }: { label: string; min?: number; max: number; value: number; suffix: string; onChange: (value: number) => void; disabled?: boolean }) {
   const [draftValue, setDraftValue] = useState(String(value));
-  const clamp = (nextValue: number) => Math.min(max, Math.max(min, nextValue));
+  const clamp = (nextValue: number) => Math.min(max, min === undefined ? nextValue : Math.max(min, nextValue));
   const update = (event: ChangeEvent<HTMLInputElement>) => {
     const nextDraftValue = event.target.value;
     setDraftValue(nextDraftValue);
-
-    if (nextDraftValue === "") {
-      return;
-    }
-
-    const nextValue = Number(nextDraftValue);
-    if (Number.isFinite(nextValue)) {
-      onChange(clamp(nextValue));
-    }
   };
   const commit = () => {
     const nextValue = Number(draftValue);
-    const nextClampedValue = Number.isFinite(nextValue) ? clamp(nextValue) : value;
+    const nextClampedValue = draftValue !== "" && Number.isFinite(nextValue) ? clamp(nextValue) : value;
     setDraftValue(String(nextClampedValue));
     onChange(nextClampedValue);
   };
@@ -309,7 +328,7 @@ function NumberField({ label, min, max, value, suffix, onChange }: { label: stri
         {label}
       </label>
       <div className="mt-2 flex min-h-14 items-center overflow-hidden rounded-soft border border-line bg-white">
-        <button type="button" onClick={() => nudge(-1)} disabled={value <= min} className="grid size-12 shrink-0 place-items-center border-r border-line text-pine transition hover:bg-pine/5 disabled:cursor-not-allowed disabled:opacity-40">
+        <button type="button" onClick={() => nudge(-1)} disabled={disabled || (min !== undefined && value <= min)} className="grid size-12 shrink-0 place-items-center border-r border-line text-pine transition hover:bg-pine/5 disabled:cursor-not-allowed disabled:opacity-40">
           <Minus className="size-4" aria-hidden="true" />
           <span className="sr-only">Decrease {label}</span>
         </button>
@@ -323,11 +342,12 @@ function NumberField({ label, min, max, value, suffix, onChange }: { label: stri
             value={draftValue}
             onChange={update}
             onBlur={commit}
-            className="min-w-0 flex-1 bg-transparent text-center text-3xl font-bold text-pine outline-none"
+            disabled={disabled}
+            className="min-w-0 flex-1 bg-transparent text-center text-3xl font-bold text-pine outline-none disabled:text-warmgray"
           />
           <span className="ml-2 shrink-0 text-sm font-semibold text-warmgray">{suffix}</span>
         </div>
-        <button type="button" onClick={() => nudge(1)} disabled={value >= max} className="grid size-12 shrink-0 place-items-center border-l border-line text-pine transition hover:bg-pine/5 disabled:cursor-not-allowed disabled:opacity-40">
+        <button type="button" onClick={() => nudge(1)} disabled={disabled || value >= max} className="grid size-12 shrink-0 place-items-center border-l border-line text-pine transition hover:bg-pine/5 disabled:cursor-not-allowed disabled:opacity-40">
           <Plus className="size-4" aria-hidden="true" />
           <span className="sr-only">Increase {label}</span>
         </button>
@@ -336,11 +356,11 @@ function NumberField({ label, min, max, value, suffix, onChange }: { label: stri
   );
 }
 
-function SelectField<T extends string>({ label, value, options, onChange }: { label: string; value: T; options: T[]; onChange: (value: T) => void }) {
+function SelectField<T extends string>({ label, value, options, onChange, disabled }: { label: string; value: T; options: T[]; onChange: (value: T) => void; disabled?: boolean }) {
   return (
     <label className="block rounded-soft border border-line bg-paper p-4">
       <span className="text-sm font-semibold text-warmgray">{label}</span>
-      <select value={value} onChange={(event) => onChange(event.target.value as T)} className="mt-2 w-full rounded-soft border border-line bg-white px-3 py-3 font-semibold text-charcoal">
+      <select value={value} onChange={(event) => onChange(event.target.value as T)} disabled={disabled} className="mt-2 w-full rounded-soft border border-line bg-white px-3 py-3 font-semibold text-charcoal disabled:text-warmgray">
         {options.map((option) => (
           <option key={option} value={option}>
             {option}
@@ -351,7 +371,7 @@ function SelectField<T extends string>({ label, value, options, onChange }: { la
   );
 }
 
-function SegmentedControl<T extends string>({ label, values, selected, onSelect }: { label: string; values: T[]; selected: T; onSelect: (value: T) => void }) {
+function SegmentedControl<T extends string>({ label, values, selected, onSelect, disabled }: { label: string; values: T[]; selected: T; onSelect: (value: T) => void; disabled?: boolean }) {
   return (
     <div className="rounded-soft border border-line bg-paper p-4">
       <p className="text-sm font-semibold text-warmgray">{label}</p>
@@ -361,6 +381,7 @@ function SegmentedControl<T extends string>({ label, values, selected, onSelect 
             type="button"
             key={value}
             onClick={() => onSelect(value)}
+            disabled={disabled}
             className={cn("min-h-11 rounded-soft border px-3 text-sm font-semibold transition", selected === value ? "border-pine bg-pine text-white" : "border-line bg-white text-charcoal hover:border-pine")}
           >
             {value}
@@ -371,10 +392,17 @@ function SegmentedControl<T extends string>({ label, values, selected, onSelect 
   );
 }
 
-function MultiSelectStep({ label, helper, options, values, onChange }: { label: string; helper: string; options: string[]; values: string[]; onChange: (values: string[]) => void }) {
+function MultiSelectStep({ label, helper, options, values, onChange, disabled }: { label: string; helper: string; options: string[]; values: string[]; onChange: (values: string[]) => void; disabled?: boolean }) {
   const [customValue, setCustomValue] = useState("");
+  const customValues = values.filter((value) => !options.includes(value));
+  const normalizedCustomValue = customValue.trim().toLowerCase();
+  const hasDuplicateValue = Boolean(normalizedCustomValue) && [...options, ...values].some((value) => value.toLowerCase() === normalizedCustomValue);
 
   const toggle = (option: string) => {
+    if (disabled) {
+      return;
+    }
+
     if (option === "None") {
       onChange(["None"]);
       return;
@@ -386,10 +414,14 @@ function MultiSelectStep({ label, helper, options, values, onChange }: { label: 
 
   const addCustom = () => {
     const trimmed = customValue.trim();
-    if (!trimmed) {
+    if (!trimmed || disabled) {
       return;
     }
-    onChange([...values.filter((value) => value !== "None"), trimmed]);
+    if ([...options, ...values].some((value) => value.toLowerCase() === trimmed.toLowerCase())) {
+      return;
+    }
+    const nextValues = values.filter((value) => value !== "None");
+    onChange(nextValues.includes(trimmed) ? nextValues : [...nextValues, trimmed]);
     setCustomValue("");
   };
 
@@ -405,15 +437,46 @@ function MultiSelectStep({ label, helper, options, values, onChange }: { label: 
             type="button"
             key={option}
             onClick={() => toggle(option)}
+            disabled={disabled}
             className={cn("min-h-12 rounded-soft border px-4 py-3 text-left text-sm font-semibold transition", values.includes(option) ? "border-pine bg-pine text-white" : "border-line bg-paper text-charcoal hover:border-pine")}
           >
             {option}
           </button>
         ))}
       </div>
+      {customValues.length ? (
+        <div className="flex flex-wrap gap-2">
+          {customValues.map((value) => (
+            <button
+              type="button"
+              key={value}
+              disabled={disabled}
+              onClick={() => onChange(values.filter((item) => item !== value))}
+              className="group inline-flex items-center gap-2 rounded-soft border border-pine/20 bg-pine/10 px-3 py-2 text-sm font-semibold text-pine transition hover:bg-pine/15 disabled:cursor-not-allowed disabled:opacity-60"
+            >
+              <span>{value}</span>
+              <X className="size-3.5 opacity-0 transition group-hover:opacity-100 group-focus-visible:opacity-100" aria-hidden="true" />
+              <span className="sr-only">Remove {value}</span>
+            </button>
+          ))}
+        </div>
+      ) : null}
       <div className="flex flex-col gap-3 rounded-soft border border-line bg-paper p-3 sm:flex-row">
-        <input value={customValue} onChange={(event) => setCustomValue(event.target.value)} placeholder="Add another option" className="min-h-11 flex-1 rounded-soft border border-line bg-white px-3 text-charcoal" />
-        <Button type="button" variant="secondary" onClick={addCustom} disabled={!customValue.trim()}>
+        <input
+          value={customValue}
+          onChange={(event) => setCustomValue(event.target.value)}
+          onKeyDown={(event) => {
+            if (event.key === "Enter") {
+              event.preventDefault();
+              addCustom();
+            }
+          }}
+          disabled={disabled}
+          placeholder="Add another option"
+          aria-invalid={hasDuplicateValue}
+          className="min-h-11 flex-1 rounded-soft border border-line bg-white px-3 text-charcoal disabled:text-warmgray aria-[invalid=true]:border-brick"
+        />
+        <Button type="button" variant="secondary" onClick={addCustom} disabled={disabled || !customValue.trim() || hasDuplicateValue}>
           <Plus className="size-4" aria-hidden="true" />
           Add
         </Button>

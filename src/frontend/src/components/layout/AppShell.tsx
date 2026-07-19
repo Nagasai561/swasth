@@ -23,9 +23,12 @@ export function AppShell({ children }: AppShellProps) {
   return (
     <div className="min-h-screen bg-paper text-charcoal">
       <aside className="fixed left-0 top-0 z-20 hidden h-screen w-64 border-r border-line bg-paper/95 px-5 py-6 backdrop-blur md:block">
-        <div className="mb-8">
-          <p className="font-serif text-3xl font-bold text-pine">{t("app.name")}</p>
-          <p className="mt-2 text-sm text-warmgray">{t("app.tagline")}</p>
+        <div className="mb-8 flex flex-col items-center space-y-3 text-center">
+          <img src="/assets/images/swasth-ai.png" alt="" className="size-20 rounded-soft border border-line bg-white object-cover" />
+          <div>
+            <p className="font-serif text-3xl font-bold leading-tight text-pine">{t("app.name")}</p>
+            <p className="mt-1 text-sm leading-5 text-warmgray">{t("app.tagline")}</p>
+          </div>
         </div>
         <nav className="space-y-2" aria-label={t("app.name")}>
           {navItems.map((item) => (
@@ -47,8 +50,12 @@ export function AppShell({ children }: AppShellProps) {
       </aside>
       <header className="sticky top-0 z-10 border-b border-line bg-paper/85 px-4 py-3 backdrop-blur md:ml-64 md:px-8">
         <div className="mx-auto flex max-w-6xl items-center justify-between gap-4">
-          <div className="md:hidden">
-            <p className="font-serif text-2xl font-bold text-pine">{t("app.name")}</p>
+          <div className="flex items-center gap-3 md:hidden">
+            <img src="/assets/images/swasth-ai.png" alt="" className="size-11 rounded-soft border border-line bg-white object-cover" />
+            <div>
+              <p className="font-serif text-xl font-bold leading-tight text-pine">{t("app.name")}</p>
+              <p className="text-[11px] leading-4 text-warmgray">{t("app.tagline")}</p>
+            </div>
           </div>
           <div className="hidden md:block" />
           <LanguageSwitcher />
